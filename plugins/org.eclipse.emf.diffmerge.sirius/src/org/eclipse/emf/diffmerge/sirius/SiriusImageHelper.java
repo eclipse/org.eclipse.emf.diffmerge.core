@@ -20,6 +20,7 @@ import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.sirius.business.api.helper.SiriusUtil;
 import org.eclipse.sirius.business.api.image.RichTextAttributeRegistry;
 import org.eclipse.sirius.diagram.DiagramPackage;
 import org.eclipse.sirius.diagram.WorkspaceImage;
@@ -174,22 +175,23 @@ public class SiriusImageHelper {
 
   /**
    * For a given resource URI, retrieve the root segment describing the root project name
-   * 
-   * @apiNote this api suppose that the given resource is directly located in it's root project. 
-   *          (which is the case in caller methods)
-   * @implNote URI can be from platform:/resource, commit:/ or other protocol such as cdo:/
-   *          on normal cases, the model uri contains the project name, but if the project is stored
-   *          on a root git repository, we retrieve the model name
    */
   protected String getProjectFromUri(URI uri_p) {
-    if (uri_p.segmentCount() > 1) {
-      return uri_p.segment(uri_p.segmentCount() - 2);
-      
-    } else if (uri_p.segmentCount() > 0) {
+
+    if (uri_p.segmentCount() == 1) {
+      // When the model is directly stored under git, we cannot retrieve a project name as there is none
       return uri_p.trimFileExtension().segment(uri_p.segmentCount() - 1);
     }
     
-    return null;
+    URI path = uri_p.trimSegments(1);
+    if (SiriusUtil.REPRESENTATIONS_FOLDER_NAME.equals(path.segment(path.segmentCount() - 1))) {
+      path = path.trimSegments(1);
+    }
+    if ("fragments".equals(path.segment(path.segmentCount() - 1))) {
+      path = path.trimSegments(1);
+    }
+    
+    return path.segment(path.segmentCount() - 1);
   }
   
   /**
